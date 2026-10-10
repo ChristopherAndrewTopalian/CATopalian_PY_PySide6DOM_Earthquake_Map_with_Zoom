@@ -1,0 +1,1 @@
+(c) Copyright 2026 Christopher Andrew Topalian All Rights Reserved
