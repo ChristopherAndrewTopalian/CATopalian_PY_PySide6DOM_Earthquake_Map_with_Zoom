@@ -42,6 +42,23 @@ set_theme('''
         font-weight: bold;
         margin-right: 10px;
     }
+    button {
+        padding: 5px 15px;
+        margin-left: 20px;
+        background-color: #444;
+        color: white;
+        font-weight: bold;
+        border-radius: 4px;
+        border: 1px solid #555;
+    }
+    button:hover {
+        background-color: #555;
+        border: 1px solid #00ffcc;
+    }
+    button:pressed {
+        background-color: #222;
+        border: 1px solid #ff3333;
+    }
 ''')
 
 # STATE VARIABLES
@@ -52,6 +69,8 @@ MAP_HEIGHT = BASE_HEIGHT
 
 # We store references to the actual DOM elements here so we can just move them!
 live_dots = [] 
+
+live_rows = [] # Track the list rows so we can clear them!
 
 # ===
 # UI LAYOUT
@@ -88,6 +107,11 @@ zoom_slider.raw.setMinimum(10) # 1.0x
 zoom_slider.raw.setMaximum(50) # 5.0x
 zoom_slider.value = 1.0
 header.append(zoom_slider)
+
+# The Refresh Button
+update_btn = ce('button')
+update_btn.textContent = "🔄 Refresh"
+header.append(update_btn)
 
 map_viewport = ce('scroll_div')
 map_viewport.style.width = BASE_WIDTH
@@ -153,6 +177,26 @@ def handle_zoom(val):
         dot_element.style.top = new_top
 
 zoom_slider.onchange = handle_zoom
+
+####
+
+def refresh_data():
+    count_lbl.textContent = "Fetching fresh data..."
+
+    # Destroy old elements from the C++ memory
+    for item in live_dots:
+        item['dom_node'].raw.deleteLater()
+    for row in live_rows:
+        row.raw.deleteLater()
+
+    # Clear the Python tracking lists
+    live_dots.clear()
+    live_rows.clear()
+
+    # Reload the map!
+    load_earthquakes()
+
+update_btn.onclick = refresh_data
 
 # ===
 # FETCH DATA (Runs ONLY Once!)
@@ -225,6 +269,8 @@ def load_earthquakes():
             row.append(info)
             row.onclick = open_maps
             list_view.append(row)
+            # Track this row so the Refresh button can delete it later!
+            live_rows.append(row)
 
             # ===
             # THE HOVER INTERACTIVITY
